@@ -104,7 +104,8 @@ static u_int policy_hash(bypass_policy_t *policy)
  */
 static bool policy_equals(bypass_policy_t *a, bypass_policy_t *b)
 {
-	return a->mask == b->mask && a->net->equals(a->net, b->net);
+	return a->mask == b->mask && a->net->equals(a->net, b->net) &&
+		   streq(a->iface, b->iface);
 }
 
 /**
@@ -153,7 +154,11 @@ static job_requeue_t update_bypass(private_bypass_lan_listener_t *this)
 			.mask = mask,
 			.iface = strdupnull(iface),
 		);
-		seen->put(seen, lookup, lookup);
+		found = seen->put(seen, lookup, lookup);
+		if (found)
+		{
+			bypass_policy_destroy(found);
+		}
 
 		found = this->policies->get(this->policies, lookup);
 		if (!found)
